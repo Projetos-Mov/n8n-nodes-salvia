@@ -1,0 +1,41 @@
+{
+  "name": "n8n-nodes-salvia",
+  "version": "0.1.0",
+  "description": "Nodes do Salvia CRM para n8n — crie leads e integre sua clínica aos seus fluxos.",
+  "keywords": [
+    "n8n-community-node-package",
+    "salvia",
+    "crm",
+    "whatsapp"
+  ],
+  "license": "MIT",
+  "author": "MovMed <pedro@grupomovmed.com.br>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Projetos-Mov/n8n-nodes-salvia.git"
+  },
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc && node scripts/copy-assets.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "n8n": {
+    "n8nNodesApiVersion": 1,
+    "credentials": [
+      "dist/credentials/SalviaApi.credentials.js"
+    ],
+    "nodes": [
+      "dist/nodes/Salvia/Salvia.node.js"
+    ]
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "n8n-workflow": "^1.70.0",
+    "typescript": "^5.5.0"
+  },
+  "peerDependencies": {
+    "n8n-workflow": "*"
+  }
+}

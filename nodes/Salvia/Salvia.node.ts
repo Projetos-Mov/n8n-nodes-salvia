@@ -1,4 +1,9 @@
-import type { INodeType, INodeTypeDescription } from "n8n-workflow";
+import type {
+  ILoadOptionsFunctions,
+  INodePropertyOptions,
+  INodeType,
+  INodeTypeDescription,
+} from "n8n-workflow";
 
 /**
  * Node declarativo do Salvia CRM. Sem método execute: o roteamento REST fica
@@ -7,10 +12,66 @@ import type { INodeType, INodeTypeDescription } from "n8n-workflow";
  * Operações:
  *   Lead → Criar  (POST /api/v1/leads)
  *
- * A resposta da API vem em { data: {...} } — o postReceive desembrulha pro
- * item de saída ser o lead direto.
+ * Funil e Etapa são DROPDOWNS carregados do GET /api/v1/catalog (estilo
+ * Kommo): ninguém cola UUID. A resposta da API vem em { data: {...} } — o
+ * postReceive desembrulha pro item de saída ser o lead direto.
  */
+
+type CatalogPipeline = {
+  id: string;
+  name: string;
+  stages: Array<{ id: string; name: string; type: string }>;
+};
+
+/** Rótulo amigável do tipo da etapa no dropdown. */
+const STAGE_TYPE_LABEL: Record<string, string> = {
+  won: " (ganho)",
+  lost: " (perda)",
+};
+
+async function fetchCatalog(ctx: ILoadOptionsFunctions): Promise<CatalogPipeline[]> {
+  const creds = (await ctx.getCredentials("salviaApi")) as { baseUrl: string };
+  const res = (await ctx.helpers.httpRequestWithAuthentication.call(ctx, "salviaApi", {
+    method: "GET",
+    baseURL: String(creds.baseUrl).replace(/\/+$/, ""),
+    url: "/api/v1/catalog",
+    json: true,
+  })) as { data?: { pipelines?: CatalogPipeline[] } };
+  return res.data?.pipelines ?? [];
+}
+
 export class Salvia implements INodeType {
+  methods = {
+    loadOptions: {
+      async getPipelines(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
+        const pipelines = await fetchCatalog(this);
+        return [
+          { name: "— Funil padrão do Salvia —", value: "" },
+          ...pipelines.map((p) => ({ name: p.name, value: p.id })),
+        ];
+      },
+
+      async getStages(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
+        const pipelines = await fetchCatalog(this);
+        const pipelineId = (this.getCurrentNodeParameter("pipelineId") as string) || "";
+        // Sem funil escolhido, lista as etapas de todos com o funil no rótulo —
+        // escolher a etapa já basta (a API deriva o funil dela).
+        const fonte = pipelineId ? pipelines.filter((p) => p.id === pipelineId) : pipelines;
+        const prefixo = (p: CatalogPipeline) =>
+          pipelineId || pipelines.length === 1 ? "" : `${p.name} → `;
+        return [
+          { name: "— Etapa de entrada (padrão) —", value: "" },
+          ...fonte.flatMap((p) =>
+            p.stages.map((s) => ({
+              name: `${prefixo(p)}${s.name}${STAGE_TYPE_LABEL[s.type] ?? ""}`,
+              value: s.id,
+            })),
+          ),
+        ];
+      },
+    },
+  };
+
   description: INodeTypeDescription = {
     displayName: "Salvia",
     name: "salvia",
@@ -121,6 +182,44 @@ export class Salvia implements INodeType {
         routing: { send: { type: "body", property: "origin" } },
       },
       {
+        displayName: "Funil",
+        name: "pipelineId",
+        type: "options",
+        typeOptions: { loadOptionsMethod: "getPipelines" },
+        default: "",
+        description:
+          "Carregado da sua conta. Deixe no padrão pra usar o primeiro funil.",
+        displayOptions: { show: { resource: ["lead"], operation: ["create"] } },
+        routing: {
+          send: {
+            type: "body",
+            property: "pipelineId",
+            // "" não pode ir pro corpo — a API valida UUID.
+            value: "={{ $value === '' ? undefined : $value }}",
+          },
+        },
+      },
+      {
+        displayName: "Etapa",
+        name: "stageId",
+        type: "options",
+        typeOptions: {
+          loadOptionsMethod: "getStages",
+          loadOptionsDependsOn: ["pipelineId"],
+        },
+        default: "",
+        description:
+          "Etapas do funil escolhido (ou de todos, com o funil no nome). Escolher a etapa já define o funil.",
+        displayOptions: { show: { resource: ["lead"], operation: ["create"] } },
+        routing: {
+          send: {
+            type: "body",
+            property: "stageId",
+            value: "={{ $value === '' ? undefined : $value }}",
+          },
+        },
+      },
+      {
         displayName: "Opções adicionais",
         name: "additionalFields",
         type: "collection",
@@ -128,22 +227,6 @@ export class Salvia implements INodeType {
         default: {},
         displayOptions: { show: { resource: ["lead"], operation: ["create"] } },
         options: [
-          {
-            displayName: "Funil (pipelineId)",
-            name: "pipelineId",
-            type: "string",
-            default: "",
-            description: "UUID do funil de destino (opcional)",
-            routing: { send: { type: "body", property: "pipelineId" } },
-          },
-          {
-            displayName: "Etapa (stageId)",
-            name: "stageId",
-            type: "string",
-            default: "",
-            description: "UUID da etapa de destino (opcional)",
-            routing: { send: { type: "body", property: "stageId" } },
-          },
           {
             displayName: "Dono (email do atendente)",
             name: "ownerEmail",

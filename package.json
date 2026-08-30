@@ -1,6 +1,6 @@
 {
   "name": "n8n-nodes-salvia",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Nodes do Salvia CRM para n8n — crie leads e integre sua clínica aos seus fluxos.",
   "keywords": [
     "n8n-community-node-package",

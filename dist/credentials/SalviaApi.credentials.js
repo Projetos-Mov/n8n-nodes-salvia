@@ -20,7 +20,7 @@ class SalviaApi {
                 // header Authorization no redirect — a chave nunca chegava na API e o
                 // teste de credencial falhava com "Couldn't connect".
                 default: "https://www.salviacrm.com.br",
-                description: "Endereço do Salvia. Pra testar, use a URL do ambiente de teste (preview).",
+                description: "Só o domínio, SEM /api/v1 — o nó completa o caminho sozinho. Pra testar, use a URL do ambiente de teste (preview).",
             },
             {
                 displayName: "API Key",

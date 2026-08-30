@@ -27,7 +27,7 @@ export class SalviaApi implements ICredentialType {
       // teste de credencial falhava com "Couldn't connect".
       default: "https://www.salviacrm.com.br",
       description:
-        "Endereço do Salvia. Pra testar, use a URL do ambiente de teste (preview).",
+        "Só o domínio, SEM /api/v1 — o nó completa o caminho sozinho. Pra testar, use a URL do ambiente de teste (preview).",
     },
     {
       displayName: "API Key",

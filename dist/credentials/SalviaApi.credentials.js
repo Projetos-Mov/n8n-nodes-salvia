@@ -16,7 +16,10 @@ class SalviaApi {
                 displayName: "Base URL",
                 name: "baseUrl",
                 type: "string",
-                default: "https://salviacrm.com.br",
+                // COM www: o apex responde 308 pro www, e clients HTTP descartam o
+                // header Authorization no redirect — a chave nunca chegava na API e o
+                // teste de credencial falhava com "Couldn't connect".
+                default: "https://www.salviacrm.com.br",
                 description: "Endereço do Salvia. Pra testar, use a URL do ambiente de teste (preview).",
             },
             {

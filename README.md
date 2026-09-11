@@ -25,7 +25,9 @@ Depois **reinicie o n8n**. O node "Salvia" aparece na busca de nodes.
 
 ### Lead → Criar
 
-`POST /api/v1/leads` — campos: Nome (obrigatório), Telefone, Email, Origem e opcionais (funil, etapa, dono, campos personalizados, UTMs, telefone duplicado). O lead cai na etapa de entrada do funil padrão quando funil/etapa não são informados.
+`POST /api/v1/leads` — campos: Nome (obrigatório), Telefone, Email, Origem e opcionais (funil, etapa, dono, campos personalizados, telefone duplicado) mais o rastreio completo da origem: **UTM Source, Medium, Campaign, Content e Term** e os IDs de clique **FBCLID** e **GCLID**. O lead cai na etapa de entrada do funil padrão quando funil/etapa não são informados.
+
+Campo de rastreio deixado em branco não é enviado — o Salvia grava nulo em vez de string vazia, e o relatório por origem não enche de valores falsos. FBCLID e GCLID têm teto de 500 caracteres na API (UTMs, 200): acima disso a requisição é recusada inteira e o lead não é criado.
 
 A saída do node é o lead criado (id, nome, etapa etc.) pronto pra usar nos próximos passos do fluxo.
 

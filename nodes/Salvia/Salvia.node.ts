@@ -258,6 +258,43 @@ export class Salvia implements INodeType {
         },
       },
       {
+        displayName: "Se o lead já existir, mover para esta etapa",
+        name: "moveExisting",
+        type: "boolean",
+        default: false,
+        description:
+          "Telefone já cadastrado reaproveita o lead. Desligado (padrão), ele fica na etapa em que está; ligado, vai para a Etapa (ou Funil) escolhida acima. Útil em formulário de anúncio, pra quem já tinha falado com a clínica.",
+        displayOptions: { show: { resource: ["lead"], operation: ["create"] } },
+        routing: { send: { type: "body", property: "moveExisting" } },
+      },
+      {
+        displayName: "Rastrear campanha (UTMs e click ids)",
+        name: "autoUtm",
+        type: "boolean",
+        default: true,
+        description:
+          "Envia utm_source, utm_medium, utm_campaign, utm_term, utm_content, gclid e fbclid do próprio payload que chegou (nomes padrão). Desligue se preferir preencher à mão nas Opções adicionais.",
+        displayOptions: { show: { resource: ["lead"], operation: ["create"] } },
+        routing: {
+          request: {
+            body: {
+              // Aceita o payload cru e o de webhook (que aninha em `body`).
+              // undefined em vez de "" porque a API descarta chave ausente, e
+              // string vazia sobrescreveria UTM que o lead já tinha.
+              utmSource: "={{ $value ? ($json.body?.utm_source || $json.utm_source || undefined) : undefined }}",
+              utmMedium: "={{ $value ? ($json.body?.utm_medium || $json.utm_medium || undefined) : undefined }}",
+              utmCampaign: "={{ $value ? ($json.body?.utm_campaign || $json.utm_campaign || undefined) : undefined }}",
+              utmTerm: "={{ $value ? ($json.body?.utm_term || $json.utm_term || undefined) : undefined }}",
+              utmContent: "={{ $value ? ($json.body?.utm_content || $json.utm_content || undefined) : undefined }}",
+              // Click ids vêm no mesmo pacote e pela mesma razão: sem eles a
+              // campanha não fica sabendo quais cliques viraram cliente.
+              gclid: "={{ $value ? ($json.body?.gclid || $json.gclid || undefined) : undefined }}",
+              fbclid: "={{ $value ? ($json.body?.fbclid || $json.fbclid || undefined) : undefined }}",
+            },
+          },
+        },
+      },
+      {
         displayName: "Campos personalizados",
         name: "customFieldsUi",
         type: "fixedCollection",
@@ -315,25 +352,44 @@ export class Salvia implements INodeType {
             routing: { send: { type: "body", property: "ownerEmail" } },
           },
           {
-            displayName: "UTM Source",
+            displayName: "UTM Source (manual)",
             name: "utmSource",
             type: "string",
             default: "",
+            description: "Sobrescreve o valor pego do payload",
             routing: { send: { type: "body", property: "utmSource" } },
           },
           {
-            displayName: "UTM Medium",
+            displayName: "UTM Medium (manual)",
             name: "utmMedium",
             type: "string",
             default: "",
+            description: "Sobrescreve o valor pego do payload",
             routing: { send: { type: "body", property: "utmMedium" } },
           },
           {
-            displayName: "UTM Campaign",
+            displayName: "UTM Campaign (manual)",
             name: "utmCampaign",
             type: "string",
             default: "",
+            description: "Sobrescreve o valor pego do payload",
             routing: { send: { type: "body", property: "utmCampaign" } },
+          },
+          {
+            displayName: "UTM Term (manual)",
+            name: "utmTerm",
+            type: "string",
+            default: "",
+            description: "Sobrescreve o valor pego do payload",
+            routing: { send: { type: "body", property: "utmTerm" } },
+          },
+          {
+            displayName: "UTM Content (manual)",
+            name: "utmContent",
+            type: "string",
+            default: "",
+            description: "Sobrescreve o valor pego do payload",
+            routing: { send: { type: "body", property: "utmContent" } },
           },
           {
             displayName: "Permitir telefone duplicado",

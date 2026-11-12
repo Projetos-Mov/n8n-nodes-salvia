@@ -27,6 +27,8 @@ Depois **reinicie o n8n**. O node "Salvia" aparece na busca de nodes.
 
 `POST /api/v1/leads` — campos: Nome (obrigatório), Telefone, Email, Origem e opcionais (funil, etapa, dono, campos personalizados, UTMs, telefone duplicado). O lead cai na etapa de entrada do funil padrão quando funil/etapa não são informados.
 
+Telefone que já está no Salvia reaproveita o lead em vez de duplicar, e por padrão ele fica na etapa em que está. Ligue **"Se o lead já existir, mover para esta etapa"** pra levá-lo à Etapa escolhida (precisa do Salvia com a opção `moveExisting` na API).
+
 A saída do node é o lead criado (id, nome, etapa etc.) pronto pra usar nos próximos passos do fluxo.
 
 ## Desenvolvimento
